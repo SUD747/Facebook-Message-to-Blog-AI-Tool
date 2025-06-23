@@ -1,0 +1,352 @@
+{% extends "base.html" %}
+
+{% block title %}Blog Editor - Facebook Blog AI Tool{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h2">
+                <i class="fas fa-edit me-2"></i>Blog Editor
+            </h1>
+            <div class="btn-group">
+                <button id="saveBtn" class="btn btn-success">
+                    <i class="fas fa-save me-2"></i>Save Blog
+                </button>
+                <button id="previewBtn" class="btn btn-info">
+                    <i class="fas fa-eye me-2"></i>Preview
+                </button>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if blog_data %}
+<div class="row">
+    <!-- Blog Editor -->
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-keyboard me-2"></i>Edit Your Blog Post
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="blogTitle" class="form-label">Blog Title:</label>
+                    <input type="text" class="form-control form-control-lg" id="blogTitle" 
+                           placeholder="Enter blog title..." value="">
+                </div>
+                <div class="mb-3">
+                    <label for="blogContent" class="form-label">Content:</label>
+                    <textarea class="form-control" id="blogContent" rows="20" 
+                              placeholder="Your blog content will appear here...">{{ blog_data.content }}</textarea>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <small class="text-muted">
+                            <i class="fas fa-clock me-1"></i>
+                            Generated: {{ blog_data.generated_at }}
+                        </small>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <small class="text-muted">
+                            <span id="wordCount">0</span> words
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar with Blog Info -->
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2"></i>Blog Information
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <strong>Topic:</strong>
+                    <span class="badge bg-primary ms-2">{{ blog_data.topic }}</span>
+                </div>
+                <div class="mb-3">
+                    <strong>Style:</strong>
+                    <span class="text-capitalize">{{ blog_data.style }}</span>
+                </div>
+                <div class="mb-3">
+                    <strong>Posts Analyzed:</strong>
+                    <span class="badge bg-success ms-2">{{ blog_data.posts_analyzed }}</span>
+                </div>
+                <div class="mb-0">
+                    <strong>Generated:</strong><br>
+                    <small class="text-muted">{{ blog_data.generated_at }}</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header bg-warning text-dark">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-tools me-2"></i>Formatting Tools
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="btn-group-vertical w-100" role="group">
+                    <button type="button" class="btn btn-sm btn-outline-primary format-btn" data-format="bold">
+                        <i class="fas fa-bold me-1"></i>Bold
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-primary format-btn" data-format="italic">
+                        <i class="fas fa-italic me-1"></i>Italic
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-primary format-btn" data-format="heading">
+                        <i class="fas fa-heading me-1"></i>Add Heading
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-primary format-btn" data-format="list">
+                        <i class="fas fa-list me-1"></i>Add List
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-lightbulb me-2"></i>Writing Tips
+                </h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        Add engaging headlines
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        Include call-to-actions
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        Break up long paragraphs
+                    </li>
+                    <li class="mb-0">
+                        <i class="fas fa-check text-success me-2"></i>
+                        Proofread before saving
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Preview Modal -->
+<div class="modal fade" id="previewModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-eye me-2"></i>Blog Preview
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="blog-content">
+                    <h1 id="previewTitle" class="mb-4"></h1>
+                    <div id="previewContent"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" id="saveFromPreview" class="btn btn-success">
+                    <i class="fas fa-save me-2"></i>Save Blog
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Save Success Modal -->
+<div class="modal fade" id="saveModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-check-circle me-2"></i>Blog Saved Successfully!
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Your blog post has been saved successfully. You can:</p>
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('my_blogs') }}" class="btn btn-primary">
+                        <i class="fas fa-blog me-2"></i>View My Blogs
+                    </a>
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-tachometer-alt me-2"></i>Create Another Blog
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<div class="alert alert-warning">
+    <h4>No Blog Content Found</h4>
+    <p>There's no blog content to edit. Please go back to the dashboard and generate a blog first.</p>
+    <a href="{{ url_for('dashboard') }}" class="btn btn-primary">
+        <i class="fas fa-arrow-left me-2"></i>Go to Dashboard
+    </a>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Auto-generate title from content
+    function generateTitle() {
+        const content = $('#blogContent').val();
+        if (content && !$('#blogTitle').val()) {
+            const lines = content.split('\n');
+            const firstLine = lines[0].replace(/[#*]/g, '').trim();
+            if (firstLine.length > 10) {
+                $('#blogTitle').val(firstLine.substring(0, 60) + (firstLine.length > 60 ? '...' : ''));
+            }
+        }
+    }
+
+    // Update word count
+    function updateWordCount() {
+        const content = $('#blogContent').val();
+        const wordCount = content.trim() ? content.trim().split(/\s+/).length : 0;
+        $('#wordCount').text(wordCount);
+    }
+
+    // Initialize
+    generateTitle();
+    updateWordCount();
+
+    // Event listeners
+    $('#blogContent').on('input', function() {
+        updateWordCount();
+        if (!$('#blogTitle').val()) {
+            generateTitle();
+        }
+    });
+
+    // Formatting tools
+    $('.format-btn').click(function() {
+        const format = $(this).data('format');
+        const textarea = $('#blogContent')[0];
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const selectedText = textarea.value.substring(start, end);
+
+        let replacement = '';
+        switch(format) {
+            case 'bold':
+                replacement = `**${selectedText || 'bold text'}**`;
+                break;
+            case 'italic':
+                replacement = `*${selectedText || 'italic text'}*`;
+                break;
+            case 'heading':
+                replacement = `\n## ${selectedText || 'Heading'}\n`;
+                break;
+            case 'list':
+                replacement = `\n- ${selectedText || 'List item'}\n`;
+                break;
+        }
+
+        const newValue = textarea.value.substring(0, start) + replacement + textarea.value.substring(end);
+        $('#blogContent').val(newValue);
+        updateWordCount();
+
+        // Focus back to textarea
+        textarea.focus();
+        const newPos = start + replacement.length;
+        textarea.setSelectionRange(newPos, newPos);
+    });
+
+    // Preview functionality
+    $('#previewBtn, #saveFromPreview').click(function() {
+        const title = $('#blogTitle').val() || 'Untitled Blog Post';
+        const content = $('#blogContent').val();
+
+        $('#previewTitle').text(title);
+
+        // Simple markdown-like rendering
+        let htmlContent = content
+            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.+?)\*/g, '<em>$1</em>')
+            .replace(/^## (.+$)/gm, '<h2>$1</h2>')
+            .replace(/^# (.+$)/gm, '<h1>$1</h1>')
+            .replace(/^- (.+$)/gm, '<li>$1</li>')
+            .replace(/\n/g, '<br>');
+
+        // Wrap consecutive list items in ul tags
+        htmlContent = htmlContent.replace(/(<li>.*<\/li>)(?:\s*<br>\s*<li>.*<\/li>)*/g, function(match) {
+            return '<ul>' + match.replace(/<br>/g, '') + '</ul>';
+        });
+
+        $('#previewContent').html(htmlContent);
+        $('#previewModal').modal('show');
+    });
+
+    // Save functionality
+    $('#saveBtn, #saveFromPreview').click(function() {
+        const title = $('#blogTitle').val() || 'Untitled Blog Post';
+        const content = $('#blogContent').val();
+
+        if (!content.trim()) {
+            alert('Please add some content to your blog post.');
+            return;
+        }
+
+        const $btn = $(this);
+        const originalText = $btn.html();
+        $btn.html('<i class="spinner-border spinner-border-sm me-2"></i>Saving...').prop('disabled', true);
+
+        $.ajax({
+            url: '/save-blog',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                title: title,
+                content: content
+            })
+        })
+        .done(function(data) {
+            $('#previewModal').modal('hide');
+            $('#saveModal').modal('show');
+        })
+        .fail(function(xhr) {
+            const error = xhr.responseJSON ? xhr.responseJSON.error : 'Failed to save blog';
+            alert('Error: ' + error);
+        })
+        .always(function() {
+            $btn.html(originalText).prop('disabled', false);
+        });
+    });
+
+    // Auto-save every 30 seconds
+    setInterval(function() {
+        const title = $('#blogTitle').val();
+        const content = $('#blogContent').val();
+
+        if (content.trim() && (title || content !== '{{ blog_data.content if blog_data else "" }}')) {
+            // Visual indicator of auto-save
+            const indicator = $('<small class="text-success ms-2"><i class="fas fa-check"></i> Auto-saved</small>');
+            $('#wordCount').parent().append(indicator);
+            setTimeout(() => indicator.remove(), 2000);
+        }
+    }, 30000);
+});
+</script>
+{% endblock %}

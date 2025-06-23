@@ -1,0 +1,402 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Facebook Blog AI Tool{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h2">
+                <i class="fas fa-tachometer-alt me-2"></i>
+                Welcome, {{ current_user.name }}!
+            </h1>
+            <div class="badge bg-success">
+                <i class="fas fa-check-circle me-1"></i>Connected to Facebook
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Step 1: Load Facebook Pages -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-flag me-2"></i>Step 1: Select Your Facebook Page
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">Load and select the Facebook page you want to analyze for blog content.</p>
+                <button id="loadPagesBtn" class="btn btn-facebook">
+                    <i class="fas fa-download me-2"></i>Load My Pages
+                </button>
+                <div id="pagesLoading" class="loading text-center mt-3">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading pages...</span>
+                    </div>
+                </div>
+                <div id="pagesList" class="mt-3"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 2: Analyze Posts -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-search me-2"></i>Step 2: Analyze Posts by Topic
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">Enter a topic to filter and analyze relevant posts from your selected page.</p>
+                <div class="mb-3">
+                    <label for="topicInput" class="form-label">Topic/Keyword:</label>
+                    <input type="text" class="form-control" id="topicInput" placeholder="e.g., technology, health, business">
+                </div>
+                <button id="analyzePosts" class="btn btn-info" disabled>
+                    <i class="fas fa-chart-line me-2"></i>Analyze Posts
+                </button>
+                <div id="postsLoading" class="loading text-center mt-3">
+                    <div class="spinner-border text-info" role="status">
+                        <span class="visually-hidden">Analyzing posts...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Posts Analysis Results -->
+<div id="postsResults" class="row mt-4" style="display: none;">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-list me-2"></i>Filtered Posts
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="postsContent"></div>
+                <div class="mt-3">
+                    <button id="generateBlogBtn" class="btn btn-success btn-lg">
+                        <i class="fas fa-magic me-2"></i>Generate Blog Post
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Blog Generation Modal -->
+<div class="modal fade" id="blogModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-robot me-2"></i>Blog Generation Settings
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="blogSettingsForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="blogStyle" class="form-label">Blog Style:</label>
+                            <select class="form-select" id="blogStyle">
+                                <option value="informative">Informative</option>
+                                <option value="casual">Casual</option>
+                                <option value="professional">Professional</option>
+                                <option value="persuasive">Persuasive</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="wordCount" class="form-label">Target Word Count:</label>
+                            <select class="form-select" id="wordCount">
+                                <option value="500">500 words</option>
+                                <option value="800" selected>800 words</option>
+                                <option value="1200">1200 words</option>
+                                <option value="1500">1500 words</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="customTopic" class="form-label">Blog Topic (optional):</label>
+                        <input type="text" class="form-control" id="customTopic" placeholder="Override detected topic">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" id="startGenerationBtn" class="btn btn-primary">
+                    <i class="fas fa-magic me-2"></i>Generate Blog
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Stats -->
+<div class="row mt-4">
+    <div class="col-md-3">
+        <div class="card text-center bg-light">
+            <div class="card-body">
+                <h5 class="card-title text-primary">
+                    <i class="fas fa-flag"></i>
+                </h5>
+                <p class="card-text">Facebook Pages</p>
+                <h3 id="pagesCount" class="text-primary">-</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center bg-light">
+            <div class="card-body">
+                <h5 class="card-title text-info">
+                    <i class="fas fa-file-alt"></i>
+                </h5>
+                <p class="card-text">Posts Analyzed</p>
+                <h3 id="postsCount" class="text-info">-</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center bg-light">
+            <div class="card-body">
+                <h5 class="card-title text-success">
+                    <i class="fas fa-blog"></i>
+                </h5>
+                <p class="card-text">Blogs Generated</p>
+                <h3 id="blogsCount" class="text-success">-</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center bg-light">
+            <div class="card-body">
+                <h5 class="card-title text-warning">
+                    <i class="fas fa-heart"></i>
+                </h5>
+                <p class="card-text">Avg Engagement</p>
+                <h3 id="avgEngagement" class="text-warning">-</h3>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    let selectedPage = null;
+    let filteredPosts = [];
+
+    // Load Facebook Pages
+    $('#loadPagesBtn').click(function() {
+        $('#pagesLoading').show();
+        $(this).prop('disabled', true);
+
+        $.get('/pages')
+            .done(function(data) {
+                if (data.data && data.data.length > 0) {
+                    let pagesHtml = '<div class="list-group mt-3">';
+                    data.data.forEach(function(page) {
+                        pagesHtml += `
+                            <div class="list-group-item list-group-item-action page-item" 
+                                 data-page-id="${page.id}" data-page-token="${page.access_token}">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">${page.name}</h6>
+                                    <small class="text-muted">${page.category || 'Page'}</small>
+                                </div>
+                                <p class="mb-1 text-muted">ID: ${page.id}</p>
+                            </div>
+                        `;
+                    });
+                    pagesHtml += '</div>';
+                    $('#pagesList').html(pagesHtml);
+                    $('#pagesCount').text(data.data.length);
+                } else {
+                    $('#pagesList').html('<div class="alert alert-warning">No pages found. Make sure you have admin access to Facebook pages.</div>');
+                }
+            })
+            .fail(function() {
+                $('#pagesList').html('<div class="alert alert-danger">Failed to load pages. Please try again.</div>');
+            })
+            .always(function() {
+                $('#pagesLoading').hide();
+                $('#loadPagesBtn').prop('disabled', false);
+            });
+    });
+
+    // Select Page
+    $(document).on('click', '.page-item', function() {
+        $('.page-item').removeClass('active');
+        $(this).addClass('active');
+        selectedPage = {
+            id: $(this).data('page-id'),
+            token: $(this).data('page-token'),
+            name: $(this).find('h6').text()
+        };
+        $('#analyzePosts').prop('disabled', false);
+    });
+
+    // Analyze Posts
+    $('#analyzePosts').click(function() {
+        if (!selectedPage) {
+            alert('Please select a Facebook page first.');
+            return;
+        }
+
+        const topic = $('#topicInput').val().trim();
+        if (!topic) {
+            alert('Please enter a topic to analyze.');
+            return;
+        }
+
+        $('#postsLoading').show();
+        $(this).prop('disabled', true);
+
+        $.get('/page-posts', {
+            page_id: selectedPage.id,
+            page_token: selectedPage.token,
+            topic: topic,
+            limit: 50
+        })
+        .done(function(data) {
+            if (data.filtered_posts && data.filtered_posts.length > 0) {
+                filteredPosts = data.filtered_posts;
+                displayPosts(data.filtered_posts, data.total_filtered, data.total_original);
+                $('#postsResults').show();
+                $('#postsCount').text(data.total_filtered);
+
+                // Calculate average engagement
+                const avgEng = Math.round(
+                    data.filtered_posts.reduce((sum, post) => sum + (post.engagement_score || 0), 0) / 
+                    data.filtered_posts.length
+                );
+                $('#avgEngagement').text(avgEng);
+            } else {
+                $('#postsContent').html(`
+                    <div class="alert alert-info">
+                        <h5>No posts found for topic "${topic}"</h5>
+                        <p>Try a different topic or check if the page has recent posts about this subject.</p>
+                    </div>
+                `);
+                $('#postsResults').show();
+            }
+        })
+        .fail(function() {
+            alert('Failed to analyze posts. Please try again.');
+        })
+        .always(function() {
+            $('#postsLoading').hide();
+            $('#analyzePosts').prop('disabled', false);
+        });
+    });
+
+    function displayPosts(posts, filteredCount, totalCount) {
+        let html = `
+            <div class="alert alert-success">
+                <strong>Analysis Complete!</strong> Found ${filteredCount} relevant posts out of ${totalCount} total posts.
+            </div>
+            <div class="row">
+        `;
+
+        posts.slice(0, 6).forEach(function(post, index) {
+            const date = new Date(post.created_time).toLocaleDateString();
+            const engagement = post.engagement_score || 0;
+            const message = post.message ? post.message.substring(0, 150) + '...' : 'No message';
+
+            html += `
+                <div class="col-md-6 mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <small class="text-muted">${date}</small>
+                                <span class="badge bg-primary engagement-badge">${engagement} eng.</span>
+                            </div>
+                            <p class="card-text post-preview">${message}</p>
+                            <a href="https://facebook.com/${post.id}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-external-link-alt me-1"></i>View Post
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        html += '</div>';
+        if (posts.length > 6) {
+            html += `<p class="text-muted">Showing top 6 posts. ${posts.length - 6} more posts will be included in blog generation.</p>`;
+        }
+
+        $('#postsContent').html(html);
+    }
+
+    // Generate Blog
+    $('#generateBlogBtn').click(function() {
+        if (filteredPosts.length === 0) {
+            alert('No posts available for blog generation.');
+            return;
+        }
+        $('#blogModal').modal('show');
+    });
+
+    $('#startGenerationBtn').click(function() {
+        const topic = $('#customTopic').val() || $('#topicInput').val();
+        const style = $('#blogStyle').val();
+        const wordCount = $('#wordCount').val();
+
+        $('#blogModal').modal('hide');
+        $(this).prop('disabled', true);
+
+        // Show generation progress
+        const progressHtml = `
+            <div class="alert alert-info">
+                <div class="d-flex align-items-center">
+                    <div class="spinner-border spinner-border-sm text-primary me-3" role="status"></div>
+                    <div>
+                        <strong>Generating your blog post...</strong><br>
+                        <small>This may take 30-60 seconds. Please wait.</small>
+                    </div>
+                </div>
+            </div>
+        `;
+        $('#postsContent').prepend(progressHtml);
+
+        $.ajax({
+            url: '/generate-blog',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                posts: filteredPosts,
+                topic: topic,
+                blog_style: style,
+                word_count: parseInt(wordCount)
+            }),
+            timeout: 120000 // 2 minutes timeout
+        })
+        .done(function(data) {
+            $('.alert-info').remove();
+            if (data.blog_content) {
+                $('#blogsCount').text('1');
+                window.location.href = '/blog-editor';
+            }
+        })
+        .fail(function(xhr) {
+            $('.alert-info').remove();
+            const error = xhr.responseJSON ? xhr.responseJSON.error : 'Unknown error occurred';
+            $('#postsContent').prepend(`
+                <div class="alert alert-danger">
+                    <strong>Blog Generation Failed:</strong> ${error}
+                </div>
+            `);
+        })
+        .always(function() {
+            $('#startGenerationBtn').prop('disabled', false);
+        });
+    });
+});
+</script>
+{% endblock %}

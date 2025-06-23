@@ -1,0 +1,8 @@
+Flask
+flask-cors
+flask-login
+requests
+python-dotenv
+spacy
+google-generativeai
+pyngrok

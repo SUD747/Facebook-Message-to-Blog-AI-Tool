@@ -1,0 +1,9 @@
+# Ignore environment variables
+.env
+
+# Ignore ngrok directory
+ngrok/
+
+# Ignore SSL certificates
+cert.pem
+key.pem

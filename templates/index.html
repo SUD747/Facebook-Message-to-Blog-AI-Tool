@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block title %}Welcome - Facebook Message-to-Blog AI Tool{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        {% if not current_user.is_authenticated %}
+        <div class="text-center mb-5">
+            <h1 class="display-4 mb-4">
+                <i class="fab fa-facebook-square text-primary me-3"></i>
+                Facebook Message-to-Blog AI Tool
+            </h1>
+            <p class="lead text-muted mb-4">
+                Transform your Facebook page posts into engaging blog content using the power of AI. 
+                Analyze, filter, and generate professional blog posts from your social media content.
+            </p>
+            <a href="{{ url_for('login') }}" class="btn btn-facebook btn-lg">
+                <i class="fab fa-facebook me-2"></i>Get Started with Facebook
+            </a>
+        </div>
+
+        <!-- Features Section -->
+        <div class="row text-center mb-5">
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="feature-icon text-primary mb-3">
+                            <i class="fas fa-search fa-3x"></i>
+                        </div>
+                        <h5 class="card-title">Smart Analysis</h5>
+                        <p class="card-text">Analyze your Facebook posts with advanced NLP to find content relevant to your topic.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="feature-icon text-success mb-3">
+                            <i class="fas fa-robot fa-3x"></i>
+                        </div>
+                        <h5 class="card-title">AI-Powered Writing</h5>
+                        <p class="card-text">Generate professional blog posts using OpenAI's advanced language models.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="feature-icon text-info mb-3">
+                            <i class="fas fa-edit fa-3x"></i>
+                        </div>
+                        <h5 class="card-title">Easy Editing</h5>
+                        <p class="card-text">Customize and refine your generated content with our intuitive blog editor.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- How It Works -->
+        <div class="card mb-5">
+            <div class="card-header bg-primary text-white">
+                <h3 class="card-title mb-0">
+                    <i class="fas fa-cogs me-2"></i>How It Works
+                </h3>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 text-center mb-3">
+                        <div class="step-number bg-primary text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                            <span class="h4 mb-0">1</span>
+                        </div>
+                        <h6>Connect Facebook</h6>
+                        <p class="text-muted small">Securely connect your Facebook account to access your pages.</p>
+                    </div>
+                    <div class="col-md-3 text-center mb-3">
+                        <div class="step-number bg-info text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                            <span class="h4 mb-0">2</span>
+                        </div>
+                        <h6>Select & Analyze</h6>
+                        <p class="text-muted small">Choose a page and analyze posts by topic with AI-powered filtering.</p>
+                    </div>
+                    <div class="col-md-3 text-center mb-3">
+                        <div class="step-number bg-success text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                            <span class="h4 mb-0">3</span>
+                        </div>
+                        <h6>Generate Blog</h6>
+                        <p class="text-muted small">Let AI create a comprehensive blog post from your social media content.</p>
+                    </div>
+                    <div class="col-md-3 text-center mb-3">
+                        <div class="step-number bg-warning text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                            <span class="h4 mb-0">4</span>
+                        </div>
+                        <h6>Edit & Export</h6>
+                        <p class="text-muted small">Refine your content and export it for publishing on your blog.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Benefits -->
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <div class="card border-success">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-clock me-2"></i>Save Time
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            <li><i class="fas fa-check text-success me-2"></i>Automate content creation</li>
+                            <li><i class="fas fa-check text-success me-2"></i>No manual post copying</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Generate blogs in minutes</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="card border-info">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-chart-line me-2"></i>Improve Quality
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            <li><i class="fas fa-check text-info me-2"></i>AI-powered insights</li>
+                            <li><i class="fas fa-check text-info me-2"></i>Professional writing style</li>
+                            <li><i class="fas fa-check text-info me-2"></i>Engagement-focused content</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <!-- User is logged in -->
+        <div class="text-center mb-5">
+            <h1 class="display-5 mb-4">Welcome back, {{ current_user.name }}!</h1>
+            <p class="lead text-muted mb-4">Ready to create amazing blog content from your Facebook posts?</p>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-primary btn-lg">
+                <i class="fas fa-tachometer-alt me-2"></i>Go to Dashboard
+            </a>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <i class="fas fa-plus-circle text-primary fa-3x mb-3"></i>
+                        <h5 class="card-title">Create New Blog</h5>
+                        <p class="card-text">Start analyzing your Facebook posts and generate a new blog post.</p>
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-primary">
+                            <i class="fas fa-arrow-right me-2"></i>Start Creating
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <i class="fas fa-blog text-success fa-3x mb-3"></i>
+                        <h5 class="card-title">My Blogs</h5>
+                        <p class="card-text">View and manage your previously generated blog posts.</p>
+                        <a href="{{ url_for('my_blogs') }}" class="btn btn-success">
+                            <i class="fas fa-eye me-2"></i>View Blogs
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block title %}My Blogs - Facebook Blog AI Tool{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h2">
+                <i class="fas fa-blog me-2"></i>My Blog Posts
+            </h1>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Create New Blog
+            </a>
+        </div>
+    </div>
+</div>
+
+{% if blogs and blogs|length > 0 %}
+<div class="row">
+    {% for blog in blogs %}
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h6 class="card-title mb-0">{{ blog.title[:50] }}{% if blog.title|length > 50 %}...{% endif %}</h6>
+            </div>
+            <div class="card-body">
+                <p class="card-text">{{ blog.content[:150] }}{% if blog.content|length > 150 %}...{% endif %}</p>
+                <div class="row text-muted small">
+                    <div class="col-6">
+                        <i class="fas fa-calendar me-1"></i>
+                        {{ blog.saved_at[:10] if blog.saved_at else 'Unknown' }}
+                    </div>
+                    <div class="col-6 text-end">
+                        <i class="fas fa-font me-1"></i>
+                        {{ blog.content.split()|length }} words
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent">
+                <div class="btn-group w-100">
+                    <button class="btn btn-outline-primary btn-sm view-blog" data-blog-index="{{ loop.index0 }}">
+                        <i class="fas fa-eye me-1"></i>View
+                    </button>
+                    <button class="btn btn-outline-success btn-sm export-blog" data-blog-index="{{ loop.index0 }}">
+                        <i class="fas fa-download me-1"></i>Export
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="text-center py-5">
+    <i class="fas fa-blog fa-5x text-muted mb-4"></i>
+    <h3>No Blog Posts Yet</h3>
+    <p class="text-muted mb-4">You haven't created any blog posts yet. Start by analyzing your Facebook posts!</p>
+    <a href="{{ url_for('dashboard') }}" class="btn btn-primary btn-lg">
+        <i class="fas fa-plus me-2"></i>Create Your First Blog
+    </a>
+</div>
+{% endif %}
+
+<!-- Blog View Modal -->
+<div class="modal fade" id="blogViewModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="blogModalTitle"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="blogModalContent" class="blog-content"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" id="exportFromModal" class="btn btn-success">
+                    <i class="fas fa-download me-2"></i>Export as HTML
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    const blogList = JSON.parse('{{ blogs|default([])|tojson|escapejs }}');
+    let currentBlogIndex = null;
+
+    // View blog
+    $('.view-blog').click(function() {
+        const index = parseInt($(this).data('blog-index'));
+        currentBlogIndex = index;
+        const blog = blogList[index];
+
+        $('#blogModalTitle').text(blog.title);
+
+        // Simple markdown-like rendering
+        let htmlContent = blog.content
+            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.+?)\*/g, '<em>$1</em>')
+            .replace(/^## (.+$)/gm, '<h2>$1</h2>')
+            .replace(/^# (.+$)/gm, '<h1>$1</h1>')
+            .replace(/^- (.+$)/gm, '<li>$1</li>')
+            .replace(/\n/g, '<br>');
+
+        $('#blogModalContent').html(htmlContent);
+        $('#blogViewModal').modal('show');
+    });
+
+    // Export functionality
+    $('.export-blog, #exportFromModal').click(function() {
+        let index;
+        if ($(this).hasClass('export-blog')) {
+            index = parseInt($(this).data('blog-index'));
+        } else {
+            index = currentBlogIndex;
+        }
+
+        if (index === null || index === undefined || isNaN(index) || !blogList[index]) return;
+        const blog = blogList[index];
+
+        // Create HTML content
+        const htmlContent = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${blog.title || 'blog_post'}</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.6; }
+        h1, h2, h3 { color: #333; }
+        .blog-meta { color: #666; font-size: 0.9em; margin-bottom: 30px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
+    </style>
+</head>
+<body>
+    <h1>${blog.title || 'Blog Post'}</h1>
+    <div class="blog-meta">
+        Generated: ${blog.saved_at ? blog.saved_at.split('T')[0] : 'Unknown date'} | 
+        Word count: ${blog.content.split(' ').length} words
+    </div>
+    <div class="content">
+        ${blog.content.replace(/\n/g, '<br>').replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\*(.+?)\*/g, '<em>$1</em>')}
+    </div>
+    <footer style="margin-top: 50px; padding-top: 20px; border-top: 1px solid #eee; color: #666; font-size: 0.8em;">
+        Generated by Facebook Message-to-Blog AI Tool
+    </footer>
+</body>
+</html>`;
+
+        // Download the HTML file
+        let safeTitle = blog.title ? blog.title.replace(/[^a-z0-9]/gi, '_').toLowerCase() : 'blog_post';
+        if (!safeTitle) safeTitle = 'blog_post';
+        const blob = new Blob([htmlContent], { type: 'text/html' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${safeTitle}.html`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+
+        // Close modal if export was from modal
+        if ($(this).attr('id') === 'exportFromModal') {
+            $('#blogViewModal').modal('hide');
+        }
+
+        // Show success message
+        const successAlert = $(`
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle me-2"></i>Blog exported successfully!
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `);
+        $('.container').prepend(successAlert);
+
+        // Auto-remove alert after 3 seconds
+        setTimeout(() => successAlert.alert('close'), 3000);
+    });
+});
+</script>
+{% endblock %}
