@@ -240,6 +240,81 @@ def get_page_posts():
     except Exception as e:
         return jsonify({"error": f"Failed to fetch posts: {str(e)}"}), 500
 
+# Create blog without posts
+@app.route("/create-blog")
+@login_required
+def create_blog():
+    return render_template("create_blog.html")
+
+@app.route("/generate-blog-from-topic", methods=["POST"])
+@login_required
+def generate_blog_from_topic():
+    try:
+        if not GEMINI_API_KEY:
+            return jsonify({"error": "Gemini API key not configured"}), 500
+
+        data = request.get_json()
+        topic = data.get('topic', '').strip()
+        blog_style = data.get('blog_style', 'informative')
+        word_count = data.get('word_count', 800)
+        additional_context = data.get('additional_context', '').strip()
+
+        if not topic:
+            return jsonify({"error": "Topic is required"}), 400
+
+        # Create blog generation prompt for topic-based content
+        prompt = f"""
+        Create a {blog_style} blog post about "{topic}".
+
+        Target word count: {word_count} words
+
+        {f"Additional context or requirements: {additional_context}" if additional_context else ""}
+
+        Please create a well-structured blog post with:
+        1. An engaging and SEO-friendly title
+        2. Introduction that hooks the reader
+        3. Main body with comprehensive coverage of the topic
+        4. Subheadings for better readability
+        5. Key insights and practical information
+        6. Conclusion with key takeaways
+        7. Call to action
+
+        The blog should be informative, engaging, and valuable for readers interested in {topic}.
+        Include relevant examples and insights where appropriate.
+        """
+
+        # Call Gemini API
+        model = genai.GenerativeModel('gemini-pro')
+        response = model.generate_content(prompt)
+        blog_content = response.text
+
+        # Store the generated blog in session
+        blog_data = {
+            'content': blog_content,
+            'topic': topic,
+            'generated_at': datetime.now().isoformat(),
+            'posts_analyzed': 0,  # No posts used
+            'style': blog_style,
+            'source': 'topic_based',
+            'additional_context': additional_context
+        }
+
+        session['generated_blog'] = blog_data
+
+        return jsonify({
+            "blog_content": blog_content,
+            "metadata": {
+                "topic": topic,
+                "posts_analyzed": 0,
+                "word_count": len(blog_content.split()),
+                "style": blog_style,
+                "source": "topic_based"
+            }
+        })
+
+    except Exception as e:
+        return jsonify({"error": f"Blog generation failed: {str(e)}"}), 500
+
 # NEW: Generate blog post using Gemini
 @app.route("/generate-blog", methods=["POST"])
 @login_required
@@ -256,6 +331,10 @@ def generate_blog():
 
         if not posts:
             return jsonify({"error": "No posts provided for blog generation"}), 400
+
+        # Input validation for word_count
+        if not isinstance(word_count, int) or word_count <= 0:
+            return jsonify({"error": "Invalid word_count specified"}), 400
 
         # Prepare content from posts
         post_content = ""
@@ -287,8 +366,18 @@ def generate_blog():
 
         # Call Gemini API
         model = genai.GenerativeModel('gemini-pro')
-        response = model.generate_content(prompt)
-        blog_content = response.text
+
+        try:
+            # Call Gemini API within a try-except
+            response = model.generate_content(prompt)
+            blog_content = response.text.strip() if response.text else ""
+
+            # Check for empty AI response
+            if not blog_content:
+                return jsonify({"error": "Blog generation returned empty content"}), 500
+
+        except Exception as e:
+            return jsonify({"error": f"Gemini API call failed: {str(e)}"}), 500
 
         # Store the generated blog in session
         blog_data = {
@@ -296,7 +385,8 @@ def generate_blog():
             'topic': topic,
             'generated_at': datetime.now().isoformat(),
             'posts_analyzed': len(posts),
-            'style': blog_style
+            'style': blog_style,
+            'source': 'facebook_posts'
         }
 
         session['generated_blog'] = blog_data
@@ -307,7 +397,8 @@ def generate_blog():
                 "topic": topic,
                 "posts_analyzed": len(posts),
                 "word_count": len(blog_content.split()),
-                "style": blog_style
+                "style": blog_style,
+                "source": "facebook_posts"
             }
         })
 

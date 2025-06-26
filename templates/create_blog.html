@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Create Blog from Topic{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <h1 class="mb-4">
+            <i class="fas fa-lightbulb me-2"></i>Create a Blog from Topic
+        </h1>
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-pen me-2"></i>Enter Details
+            </div>
+            <div class="card-body">
+                <form id="createBlogForm">
+                    <div class="mb-3">
+                        <label for="topicInput" class="form-label">Topic:</label>
+                        <input type="text" class="form-control" id="topicInput" placeholder="e.g., Artificial Intelligence">
+                    </div>
+                    <div class="mb-3">
+                        <label for="blogStyle" class="form-label">Blog Style:</label>
+                        <select class="form-select" id="blogStyle">
+                            <option value="informative" selected>Informative</option>
+                            <option value="casual">Casual</option>
+                            <option value="professional">Professional</option>
+                            <option value="persuasive">Persuasive</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="wordCount" class="form-label">Target Word Count:</label>
+                        <select class="form-select" id="wordCount">
+                            <option value="500">500 words</option>
+                            <option value="800" selected>800 words</option>
+                            <option value="1200">1200 words</option>
+                            <option value="1500">1500 words</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="additionalContext" class="form-label">Additional Context (optional):</label>
+                        <textarea class="form-control" id="additionalContext" rows="3"
+                                  placeholder="Any extra details or instructions..."></textarea>
+                    </div>
+                    <button type="button" id="generateFromTopicBtn" class="btn btn-success">
+                        <i class="fas fa-magic me-2"></i>Generate Blog
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div id="generationResult" class="mt-4" style="display: none;">
+            <div class="alert alert-info">
+                <div class="d-flex align-items-center">
+                    <div class="spinner-border spinner-border-sm text-primary me-3" role="status"></div>
+                    <div>
+                        <strong>Generating your blog post...</strong><br>
+                        <small>Please wait a few moments.</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    $('#generateFromTopicBtn').click(function() {
+        const topic = $('#topicInput').val().trim();
+        if(!topic) {
+            alert('Please enter a topic.');
+            return;
+        }
+
+        const blogStyle = $('#blogStyle').val();
+        const wordCount = $('#wordCount').val();
+        const additionalContext = $('#additionalContext').val().trim();
+
+        $('#generationResult').show();
+
+        $.ajax({
+            url: '/generate-blog-from-topic',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                topic: topic,
+                blog_style: blogStyle,
+                word_count: parseInt(wordCount),
+                additional_context: additionalContext
+            }),
+            timeout: 120000
+        })
+        .done(function(data) {
+            if(data.blog_content) {
+                window.location.href = '/blog-editor';
+            } else {
+                alert('No blog content generated. Please try again.');
+                $('#generationResult').hide();
+            }
+        })
+        .fail(function(xhr) {
+            const error = xhr.responseJSON ? xhr.responseJSON.error : 'Unknown error';
+            alert('Error: ' + error);
+            $('#generationResult').hide();
+        });
+    });
+});
+</script>
+{% endblock %}
