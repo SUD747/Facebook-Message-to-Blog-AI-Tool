@@ -452,6 +452,55 @@ def my_blogs():
     saved_blogs = session.get('saved_blogs', [])
     return render_template("my_blogs.html", blogs=saved_blogs)
 
+# Step: Pre-defined tags for auto-tagging
+predefined_tags = ["technology", "marketing", "health", "education", "business"]
+
+@app.route("/blog-preview")
+@login_required
+def blog_preview():
+    blog_data = session.get('generated_blog')
+    if not blog_data:
+        flash("No blog content to preview.", "warning")
+        return redirect(url_for('dashboard'))
+
+    content_lower = blog_data['content'].lower()
+    matched_tags = [tag for tag in predefined_tags if tag in content_lower]
+    blog_data['tags'] = matched_tags
+
+    # Use "markdown" or "html" parameter for format selection
+    fmt = request.args.get('format', 'html').lower()
+    if fmt == 'markdown':
+        # Minimal approach: returning raw content
+        return jsonify({
+            "content_markdown": blog_data['content'],
+            "tags": blog_data['tags']
+        })
+    else:
+        # Render as HTML preview in the template
+        return render_template("blog_preview.html", blog_data=blog_data)
+
+@app.route("/export-blog", methods=["GET"])
+@login_required
+def export_blog():
+    blog_data = session.get('generated_blog')
+    if not blog_data:
+        return jsonify({"error": "No blog content to export"}), 400
+
+    fmt = request.args.get('format', 'html').lower()
+    if fmt == 'markdown':
+        return jsonify({
+            "export_format": "markdown",
+            "content": blog_data['content'],
+            "tags": blog_data.get('tags', [])
+        })
+    else:
+        # Export as HTML (simple approach)
+        return jsonify({
+            "export_format": "html",
+            "content": f"<html><body>{blog_data['content']}</body></html>",
+            "tags": blog_data.get('tags', [])
+        })
+
 # API endpoint for health check
 @app.route("/health")
 def health_check():
