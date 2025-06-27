@@ -5,3 +5,5 @@
 ngrok/
 
 # Ignore SSL certificates
+cert.pem
+key.pem
