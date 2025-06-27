@@ -87,7 +87,7 @@
 {% block scripts %}
 <script>
 $(document).ready(function() {
-    const blogList = JSON.parse('{{ blogs|default([])|tojson|escapejs }}');
+    const blogList = JSON.parse('{{ blogs|default([])|tojson }}');
     let currentBlogIndex = null;
 
     // View blog
